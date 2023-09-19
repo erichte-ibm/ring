@@ -98,6 +98,8 @@ const RING_SRCS: &[(&[&str], &str)] = &[
     (&[POWERPC64], "crypto/fipsmodule/bn/asm/ppc-mont.pl"),
     (&[POWERPC64], "crypto/fipsmodule/ec/asm/ecp_nistz256-ppc64.pl"),
     (&[POWERPC64], "crypto/cpu-ppc.c"),
+    (&[POWERPC64], "crypto/poly1305/asm/poly1305-ppc.pl"),
+    (&[POWERPC64], "crypto/chacha/asm/chacha-ppc.pl"),
 ];
 
 const SHA256_X86_64: &str = "crypto/fipsmodule/sha/asm/sha256-x86_64.pl";
