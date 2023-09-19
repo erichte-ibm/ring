@@ -44,7 +44,7 @@ const RING_SRCS: &[(&[&str], &str)] = &[
     (&[], "crypto/mem.c"),
     (&[], "crypto/poly1305/poly1305.c"),
 
-    // (&[AARCH64, ARM, X86_64, X86], "crypto/fipsmodule/ec/ecp_nistz256.c"),
+    (&[AARCH64, ARM, X86_64, X86, POWERPC64], "crypto/fipsmodule/ec/ecp_nistz256.c"),
     (&[AARCH64, ARM, X86_64, X86, POWERPC64], "crypto/crypto.c"),
     (&[AARCH64, ARM, X86_64, X86, POWERPC64], "crypto/curve25519/curve25519.c"),
     (&[AARCH64, ARM, X86_64, X86, POWERPC64], "crypto/fipsmodule/ec/ecp_nistz.c"),
@@ -96,6 +96,7 @@ const RING_SRCS: &[(&[&str], &str)] = &[
     (&[AARCH64], SHA512_ARMV8),
 
     (&[POWERPC64], "crypto/fipsmodule/bn/asm/ppc-mont.pl"),
+    (&[POWERPC64], "crypto/fipsmodule/ec/asm/ecp_nistz256-ppc64.pl"),
     (&[POWERPC64], "crypto/cpu-ppc.c"),
 ];
 
