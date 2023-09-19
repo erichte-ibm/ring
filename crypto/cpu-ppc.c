@@ -7,8 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 /* This file is derived from ppccap.c in OpenSSL */
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <setjmp.h>
+#include <signal.h>
+#include <unistd.h>
+#include <sys/utsname.h>
 
+# define PPC_FPU64       (1<<0)
+# define PPC_ALTIVEC     (1<<1)
+# define PPC_CRYPTO207   (1<<2)
+# define PPC_FPU         (1<<3)
+# define PPC_MADD300     (1<<4)
+# define PPC_MFTB        (1<<5)
+# define PPC_MFSPR268    (1<<6)
 
+unsigned int GFp_ppccap_P = 0;
 
 int bn_mul_mont_int(unsigned long *rp, const unsigned long *ap, const unsigned long *bp,
                     const unsigned long *np, const unsigned long *n0, int num);
@@ -34,4 +50,58 @@ int GFp_bn_mul_mont(unsigned long *rp, const unsigned long *ap, const unsigned l
     return bn_mul_mont_int(rp, ap, bp, np, n0, num);
 }
 
+void ChaCha20_ctr32_int(unsigned char *out, const unsigned char *inp,
+                        size_t len, const unsigned int key[8],
+                        const unsigned int counter[4]);
+void ChaCha20_ctr32_vmx(unsigned char *out, const unsigned char *inp,
+                        size_t len, const unsigned int key[8],
+                        const unsigned int counter[4]);
+void ChaCha20_ctr32_vsx(unsigned char *out, const unsigned char *inp,
+                        size_t len, const unsigned int key[8],
+                        const unsigned int counter[4]);
+void GFp_ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
+                    size_t len, const unsigned int key[8],
+                    const unsigned int counter[4])
+{
+    /* ring does not check and vsx ver crashes with 0-length input */
+    if (!len)
+        return;
+    (GFp_ppccap_P & PPC_CRYPTO207)
+        ? ChaCha20_ctr32_vsx(out, inp, len, key, counter)
+        : GFp_ppccap_P & PPC_ALTIVEC
+            ? ChaCha20_ctr32_vmx(out, inp, len, key, counter)
+            : ChaCha20_ctr32_int(out, inp, len, key, counter);
+}
 
+
+void GFp_poly1305_init_int(void *ctx, const unsigned char key[16]);
+void GFp_poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
+                         unsigned int padbit);
+void GFp_poly1305_emit(void *ctx, unsigned char mac[16],
+                       const unsigned int nonce[4]);
+void GFp_poly1305_init_fpu(void *ctx, const unsigned char key[16]);
+void GFp_poly1305_blocks_fpu(void *ctx, const unsigned char *inp, size_t len,
+                         unsigned int padbit);
+void GFp_poly1305_emit_fpu(void *ctx, unsigned char mac[16],
+                       const unsigned int nonce[4]);
+void GFp_poly1305_blocks_vsx(void *ctx, const unsigned char *inp, size_t len,
+                         unsigned int padbit);
+int GFp_poly1305_init_asm(void *ctx, const unsigned char key[16], void *func[2]);
+
+int GFp_poly1305_init_asm(void *ctx, const unsigned char key[16], void *func[2])
+{
+    if (GFp_ppccap_P & PPC_CRYPTO207) {
+        GFp_poly1305_init_int(ctx, key);
+        func[0] = (void*)(uintptr_t)GFp_poly1305_blocks_vsx;
+        func[1] = (void*)(uintptr_t)GFp_poly1305_emit;
+    } else if (sizeof(size_t) == 4 && (GFp_ppccap_P & PPC_FPU)) {
+        GFp_poly1305_init_fpu(ctx, key);
+        func[0] = (void*)(uintptr_t)GFp_poly1305_blocks_fpu;
+        func[1] = (void*)(uintptr_t)GFp_poly1305_emit_fpu;
+    } else {
+        GFp_poly1305_init_int(ctx, key);
+        func[0] = (void*)(uintptr_t)GFp_poly1305_blocks;
+        func[1] = (void*)(uintptr_t)GFp_poly1305_emit;
+    }
+    return 1;
+}
