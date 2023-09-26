@@ -95,6 +95,11 @@ case $target in
   cargo install wasm-bindgen-cli --bin wasm-bindgen-test-runner
   use_clang=1
   ;;
+--target=powerpc64le-unknown-linux-gnu
+  use_clang=1
+  install_packages \
+    qemu-user
+  ;;
 --target=*)
   ;;
 esac

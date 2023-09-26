@@ -116,6 +116,12 @@ case $target in
     export CARGO_TARGET_WASM32_UNKNOWN_UNKNOWN_RUNNER=wasm-bindgen-test-runner
     export WASM_BINDGEN_TEST_TIMEOUT=60
     ;;
+  powerpc64le-unknown-linux-gnu)
+    export CC_powerpc64le_unknown_linux_gnu=clang-$llvm_version
+    export AR_powerpc64le_unknown_linux_gnu=llvm-ar-$llvm_version
+    export CFLAGS_powerpc64le_unknown_linux_gnu="--sysroot=/usr/powerpc64le-linux-gnu"
+    export CARGO_TARGET_POWERPC64LE_UNKNOWN_LINUX_GNU_LINKER=powerpc64le-linux-gnu-gcc
+    export CARGO_TARGET_POWERPC64LE_UNKNOWN_LINUX_GNU_RUNNER="$qemu_powerpc64le"
   *)
     ;;
 esac
