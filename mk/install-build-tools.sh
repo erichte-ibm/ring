@@ -98,6 +98,7 @@ case $target in
 --target=powerpc64le-unknown-linux-gnu)
   use_clang=1
   install_packages \
+    libc6-dev-ppc64el-cross \
     qemu-user
   ;;
 --target=*)
